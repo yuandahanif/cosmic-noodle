@@ -6,7 +6,7 @@ mod consts;
 mod gui;
 
 use consts::consts::{self as CONST, INTER_FONT};
-use gui::app::app::App;
+use gui::app::app::{App, Config, Flags};
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
@@ -18,6 +18,15 @@ fn main() -> iced::Result {
 
         println!("{:?}", dir.to_str());
     }
+
+    let flags = Flags {
+        config: Config::new(
+            CONST::APP_NAME.to_string(),
+            CONST::VERSION.to_string(),
+            CONST::AUTHOR.to_string(),
+            CONST::QUALIFIER.to_string(),
+        ),
+    };
 
     let settings = Settings {
         id: None,
@@ -35,11 +44,11 @@ fn main() -> iced::Result {
             exit_on_close_request: true,
             level: Level::Normal,
         },
-        flags: (),
+        flags,
         default_font: iced::font::Font::with_name("Inter-Regular"),
         fonts: vec![std::borrow::Cow::Borrowed(INTER_FONT)],
         default_text_size: iced::Pixels(13.),
-        antialiasing: false,
+        antialiasing: true,
     };
 
     App::run(settings)
