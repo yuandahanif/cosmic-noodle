@@ -1,0 +1,9 @@
+[package]
+name = "cosmic-noodle"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+directories = "5.0"
+iced = "0.12.1"
