@@ -3,5 +3,7 @@ pub mod consts {
     pub const AUTHOR: &str = "yume";
     pub const QUALIFIER: &str = "rs";
 
-    // pub const MODEL: &[u8] = include_bytes!("../assets/model/model.onnx");
+    pub const MODEL_TACO: &[u8] = include_bytes!("../assets/model/yolov8-taco.onnx");
+    pub const MODEL_TACO_CLASSES: &[u8] =
+        include_bytes!("../assets/model/yolov8-taco-classes.yaml");
 }
