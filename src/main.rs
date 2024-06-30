@@ -7,7 +7,9 @@ use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
-use nokhwa::Buffer;
+
+use opencv::prelude::Mat;
+
 use tracing::Level as TraceLevel;
 
 use gui::{
@@ -32,7 +34,7 @@ fn main() -> iced::Result {
         println!("{:?}", dir.to_str());
     }
 
-    let (cam_tx, cam_rx) = unbounded::<Buffer>();
+    let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
 
     let flags = Flags {

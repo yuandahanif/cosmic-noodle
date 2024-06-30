@@ -13,3 +13,7 @@ POC of waste management system
 ## references
 
 - [StableView](https://github.com/Shubhamai/StableView)
+
+## issues
+
+- opencv binding won't build on my main machine, the error [fatal error: 'memory' file not found](https://github.com/apple/swift-nio-ssl/issues/105)

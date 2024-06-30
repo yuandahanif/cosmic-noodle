@@ -5,7 +5,8 @@ pub mod app {
         executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
     use nokhwa::utils::CameraIndex;
-    use nokhwa::Buffer;
+
+    use opencv::prelude::Mat;
 
     use crate::camera::camera::Camera;
     use crate::gui::{config::Config, view::app_view};
@@ -29,13 +30,13 @@ pub mod app {
         pub camera: Camera,
         pub state: State,
         pub screen: Screen,
-        pub cam_rx: Receiver<Buffer>,
+        pub cam_rx: Receiver<Mat>,
     }
 
     pub struct Flags {
         pub config: Config,
         pub camera: Camera,
-        pub cam_rx: Receiver<Buffer>,
+        pub cam_rx: Receiver<Mat>,
     }
 
     #[derive(Debug, Clone)]
@@ -95,7 +96,7 @@ pub mod app {
         }
 
         fn subscription(&self) -> Subscription<Message> {
-            iced::time::every(std::time::Duration::from_millis(500)).map(|_| Message::Tick)
+            iced::time::every(std::time::Duration::from_millis(14)).map(|_| Message::Tick)
         }
 
         fn view(&self) -> Element<Message> {

@@ -5,6 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+opencv = { version = "0.92.0", features = ["clang-runtime"] }
 anyhow = "=1.0.86"
 crossbeam-channel = "0.5.13"
 directories = "5.0"

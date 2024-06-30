@@ -9,24 +9,29 @@ pub mod camera {
         thread,
     };
 
+    use opencv::{
+        prelude::{Mat, VideoCaptureTrait, VideoCaptureTraitConst},
+        videoio,
+    };
+
     use nokhwa::{
         nokhwa_initialize,
         pixel_format::RgbFormat,
         query,
         utils::{ApiBackend, CameraIndex, RequestedFormat, RequestedFormatType},
-        Buffer, CallbackCamera,
+        CallbackCamera,
     };
 
     pub struct Camera {
         device_list: HashMap<String, CameraIndex>,
         selected_camera: Option<CameraIndex>,
-        sender: Sender<Buffer>,
+        sender: Sender<Mat>,
         keep_running: Arc<AtomicBool>,
         cam_thread: Option<thread::JoinHandle<()>>,
     }
 
     impl Camera {
-        pub fn new(sender: Sender<Buffer>) -> Camera {
+        pub fn new(sender: Sender<Mat>) -> Camera {
             Camera {
                 device_list: HashMap::new(),
                 selected_camera: None,
@@ -72,13 +77,34 @@ pub mod camera {
         }
 
         pub fn start_camera(&mut self) {
-            // let camera_index = self
-            //     .selected_camera
-            //     .take()
-            //     .or_else(|| self.device_list.values().next().cloned());
-            // let camera_index = camera_index.unwrap();
-
             if self.cam_thread.is_some() {
+                return;
+            }
+            let camera_index = self
+                .selected_camera
+                .take()
+                .or_else(|| self.device_list.values().next().cloned());
+
+            let mut cam = match videoio::VideoCapture::new(0, videoio::CAP_ANY) {
+                Ok(cam) => cam,
+                Err(error) => {
+                    println!("Error opening camera: {:?}", error);
+                    return;
+                }
+            };
+
+            let opened = match videoio::VideoCapture::is_opened(&cam) {
+                Ok(opened) => opened,
+                Err(error) => {
+                    println!("Error checking if camera is opened: {:?}", error);
+                    return;
+                }
+            };
+
+            if opened {
+                println!("Camera is opened");
+            } else {
+                println!("Camera is not opened");
                 return;
             }
 
@@ -86,27 +112,22 @@ pub mod camera {
             self.keep_running.store(true, Ordering::SeqCst);
             let cloned_keep_running = self.keep_running.clone();
 
-            let cameras = query(ApiBackend::Auto).unwrap();
-            // nokwah bug on v4l2 backend
-            let first_camera = cameras.get(1).unwrap();
-            let format =
-                RequestedFormat::new::<RgbFormat>(RequestedFormatType::AbsoluteHighestFrameRate);
-            let mut threaded =
-                CallbackCamera::new(first_camera.index().clone(), format, |_buffer| {}).unwrap();
-
             let cam_thread = thread::spawn(move || {
-                threaded.open_stream().unwrap();
-
+                // Running loop as long as keep_running is true
                 while cloned_keep_running.load(Ordering::SeqCst) {
-                    if let Ok(frame) = threaded.poll_frame() {
-                        println!("{:?}", frame.resolution());
-                        if tx.send(frame).is_err() {
-                            break;
+                    // Reading frame
+                    let mut frame = Mat::default();
+                    match cam.read(&mut frame) {
+                        Ok(_) => (),
+                        Err(error) => {
+                            panic!("Unable to read frame from camera : {:?}", error);
                         }
                     }
-                }
 
-                threaded.stop_stream().unwrap();
+                    if tx.send(frame).is_err() {
+                        break;
+                    }
+                }
             });
 
             self.cam_thread = Some(cam_thread);

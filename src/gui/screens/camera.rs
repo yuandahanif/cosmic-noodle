@@ -6,7 +6,8 @@ use iced::{
     },
     Element, Length,
 };
-use nokhwa::pixel_format::RgbAFormat;
+
+use opencv::{core::VectorToVec, imgcodecs};
 
 use crate::gui::app::app::{App, Message};
 
@@ -26,7 +27,15 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
         .height(Length::Fixed(200.));
 
     if let Ok(frame) = app.cam_rx.try_recv() {
-        let image = frame.decode_image::<RgbAFormat>().unwrap().into_vec();
+        let mut encoded_image = opencv::core::Vector::<u8>::new();
+        let params = opencv::core::Vector::<i32>::new();
+        match imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params) {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Error encoding image: {}", e);
+            }
+        }
+        let image = encoded_image.to_vec();
 
         image_viewer = viewer(image::Handle::from_memory(image))
             .width(Length::Fill)
