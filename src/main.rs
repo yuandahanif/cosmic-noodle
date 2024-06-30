@@ -8,7 +8,10 @@ use iced::{
 };
 use tracing::Level as TraceLevel;
 
-use gui::{app::app::{App, Flags}, config::Config};
+use gui::{
+    app::app::{App, Flags},
+    config::Config,
+};
 use tracing_subscriber::FmtSubscriber;
 
 mod camera;
@@ -40,7 +43,7 @@ fn main() -> iced::Result {
     let settings = Settings {
         id: None,
         window: window::Settings {
-            size: Size::new(750., 620.), // start size
+            size: Size::new(1352., 755.), // start size
             position: window::Position::Centered,
             min_size: Some(Size::new(750., 620.)),
             max_size: None,

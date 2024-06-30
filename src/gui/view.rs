@@ -2,11 +2,11 @@ use bytesize::ByteSize;
 use iced::{
     advanced::mouse,
     system,
-    widget::{canvas, column, container, horizontal_space, row, scrollable, text, Column},
+    widget::{button, canvas, column, container, horizontal_space, row, scrollable, text, Column},
     Alignment, Element, Length, Point, Rectangle, Renderer, Theme,
 };
 
-use crate::gui::app::app::{App, Message};
+use crate::gui::app::app::{App, Message, Screen};
 
 pub fn square<'a>(size: impl Into<Length> + Copy) -> Element<'a, Message> {
     struct Square;
@@ -109,16 +109,16 @@ fn system_information(information: system::Information) -> Element<'static, Mess
     ));
 
     column![
-        system_name.size(30),
-        system_kernel.size(30),
-        system_version.size(30),
-        system_short_version.size(30),
-        cpu_brand.size(30),
-        cpu_cores.size(30),
-        memory_total.size(30),
-        memory_used.size(30),
-        graphics_adapter.size(30),
-        graphics_backend.size(30),
+        system_name.size(20),
+        system_kernel.size(20),
+        system_version.size(20),
+        system_short_version.size(20),
+        cpu_brand.size(20),
+        cpu_cores.size(20),
+        memory_total.size(20),
+        memory_used.size(20),
+        graphics_adapter.size(20),
+        graphics_backend.size(20),
         // button("Refresh").on_press(Message::Refresh)
     ]
     .spacing(10)
@@ -139,36 +139,46 @@ pub fn app_view(app: &App) -> Column<Message> {
     );
 
     let sidebar = container(
-        column!["Sidebar!", square(50), square(50)]
-            .spacing(40)
-            .padding(10)
-            .width(200)
-            .align_items(Alignment::Center),
+        column![
+            "Sidebar!",
+            button("Home").on_press(Message::Navigate(Screen::Home)),
+            button("System Information").on_press_maybe(match &app.state.system_information {
+                Some(inf) => Some(Message::Navigate(Screen::SystemInformation(inf.clone()))),
+                None => None,
+            }),
+        ]
+        .spacing(10)
+        .padding(10)
+        .width(200)
+        .align_items(Alignment::Start),
     )
     .center_y();
 
-    let system_information = match &app.system_information {
-        Some(information) => system_information(information.clone()),
-        None => column!["No system information"].into(),
+    let content = match &app.screen {
+        Screen::SystemInformation(information) => container(
+            scrollable(
+                column![
+                    "System information!",
+                    system_information(information.clone())
+                ]
+                .spacing(40)
+                .align_items(Alignment::Center)
+                .width(Length::Fill),
+            )
+            .height(Length::Fill),
+        ),
+        Screen::Home => container(
+            scrollable(
+                column!["Home!",]
+                    .spacing(40)
+                    .align_items(Alignment::Center)
+                    .width(Length::Fill),
+            )
+            .height(Length::Fill),
+        ),
+        Screen::Settings => todo!(),
+        Screen::Camera => todo!(),
     };
-
-    let content = container(
-        scrollable(
-            column![
-                "Content!",
-                text(app.state.tick).size(10),
-                system_information,
-                square(200),
-                square(400),
-                "The end"
-            ]
-            .spacing(40)
-            .align_items(Alignment::Center)
-            .width(Length::Fill),
-        )
-        .height(Length::Fill),
-    )
-    .padding(10);
 
     column![header, row![sidebar, content]].into()
 }

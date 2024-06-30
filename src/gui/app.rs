@@ -10,13 +10,22 @@ pub mod app {
     #[derive(Debug, Default)]
     pub struct State {
         pub tick: u64,
+        pub system_information: Option<system::Information>,
+    }
+
+    #[derive(Debug, Clone)]
+    pub enum Screen {
+        Home,
+        Camera,
+        SystemInformation(system::Information),
+        Settings,
     }
 
     pub struct App {
         config: Config,
         pub camera: Camera,
         pub state: State,
-        pub system_information: Option<system::Information>,
+        pub screen: Screen,
     }
 
     pub struct Flags {
@@ -28,6 +37,7 @@ pub mod app {
     pub enum Message {
         Tick,
         SystemInformationReceived(system::Information),
+        Navigate(Screen),
     }
 
     impl Application for App {
@@ -42,7 +52,7 @@ pub mod app {
                     config: flags.config,
                     camera: flags.camera,
                     state: State::default(),
-                    system_information: None,
+                    screen: Screen::Home,
                 },
                 system::fetch_information(Message::SystemInformationReceived),
             )
@@ -62,7 +72,10 @@ pub mod app {
                     self.state.tick = self.state.tick.wrapping_add(1);
                 }
                 Message::SystemInformationReceived(information) => {
-                    self.system_information = Some(information);
+                    self.state.system_information = Some(information);
+                }
+                Message::Navigate(screen) => {
+                    self.screen = screen;
                 }
             }
 
