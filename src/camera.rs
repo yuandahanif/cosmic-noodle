@@ -85,6 +85,7 @@ pub mod camera {
                 .take()
                 .or_else(|| self.device_list.values().next().cloned());
 
+            // FIXME: This is a hack to get the camera index
             let mut cam = match videoio::VideoCapture::new(0, videoio::CAP_ANY) {
                 Ok(cam) => cam,
                 Err(error) => {

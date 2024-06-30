@@ -22,28 +22,27 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
     )
     .placeholder("Choose webcam");
 
-    let mut image_viewer: image::Viewer<image::Handle> = viewer(image::Handle::from_memory(vec![]))
+    let frame = app.state.frame.clone();
+    let mut encoded_image = opencv::core::Vector::<u8>::new();
+    let params = opencv::core::Vector::<i32>::new();
+    encoded_image.clear();
+    match imgcodecs::imencode(".png", &frame, &mut encoded_image, &params) {
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Error encoding image: {}", e);
+        }
+    }
+    let image = encoded_image.to_vec();
+
+    let image_viewer: image::Viewer<image::Handle> = viewer(image::Handle::from_memory(image))
         .width(Length::Fill)
         .height(Length::Fixed(200.));
 
-    if let Ok(frame) = app.cam_rx.try_recv() {
-        let mut encoded_image = opencv::core::Vector::<u8>::new();
-        let params = opencv::core::Vector::<i32>::new();
-        match imgcodecs::imencode(".PNG", &frame, &mut encoded_image, &params) {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::error!("Error encoding image: {}", e);
-            }
-        }
-        let image = encoded_image.to_vec();
-
-        image_viewer = viewer(image::Handle::from_memory(image))
-            .width(Length::Fill)
-            .height(Length::Fixed(200.));
-    }
-
     container(
         column![
+            text(app.state.tick.to_string())
+                .size(50)
+                .width(Length::Fill),
             image_viewer,
             container(row!(
                 button("Toggle Camera").on_press(Message::CameraToggle),

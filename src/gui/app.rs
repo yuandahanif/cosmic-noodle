@@ -15,6 +15,7 @@ pub mod app {
     pub struct State {
         pub tick: u64,
         pub system_information: Option<system::Information>,
+        pub frame: Mat,
     }
 
     #[derive(Debug, Clone)]
@@ -79,6 +80,10 @@ pub mod app {
             match message {
                 Message::Tick => {
                     self.state.tick = self.state.tick.wrapping_add(1);
+                    self.state.frame = match self.cam_rx.try_recv() {
+                        Ok(result) => result,
+                        Err(_) => self.state.frame.clone(),
+                    };
                 }
                 Message::SystemInformationReceived(information) => {
                     self.state.system_information = Some(information);
@@ -96,7 +101,7 @@ pub mod app {
         }
 
         fn subscription(&self) -> Subscription<Message> {
-            iced::time::every(std::time::Duration::from_millis(14)).map(|_| Message::Tick)
+            iced::time::every(std::time::Duration::from_millis(10)).map(|_| Message::Tick)
         }
 
         fn view(&self) -> Element<Message> {
