@@ -1,4 +1,5 @@
 pub mod app {
+    use iced::system;
     use iced::{
         executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
@@ -15,6 +16,7 @@ pub mod app {
         config: Config,
         pub camera: Camera,
         pub state: State,
+        pub system_information: Option<system::Information>,
     }
 
     pub struct Flags {
@@ -22,9 +24,10 @@ pub mod app {
         pub camera: Camera,
     }
 
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub enum Message {
         Tick,
+        SystemInformationReceived(system::Information),
     }
 
     impl Application for App {
@@ -39,8 +42,9 @@ pub mod app {
                     config: flags.config,
                     camera: flags.camera,
                     state: State::default(),
+                    system_information: None,
                 },
-                Command::none(),
+                system::fetch_information(Message::SystemInformationReceived),
             )
         }
 
@@ -56,6 +60,9 @@ pub mod app {
             match message {
                 Message::Tick => {
                     self.state.tick = self.state.tick.wrapping_add(1);
+                }
+                Message::SystemInformationReceived(information) => {
+                    self.system_information = Some(information);
                 }
             }
 
