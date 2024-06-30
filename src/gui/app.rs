@@ -1,8 +1,11 @@
 pub mod app {
+    use crossbeam_channel::Receiver;
     use iced::system;
     use iced::{
         executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
+    use nokhwa::utils::CameraIndex;
+    use nokhwa::Buffer;
 
     use crate::camera::camera::Camera;
     use crate::gui::{config::Config, view::app_view};
@@ -26,16 +29,20 @@ pub mod app {
         pub camera: Camera,
         pub state: State,
         pub screen: Screen,
+        pub cam_rx: Receiver<Buffer>,
     }
 
     pub struct Flags {
         pub config: Config,
         pub camera: Camera,
+        pub cam_rx: Receiver<Buffer>,
     }
 
     #[derive(Debug, Clone)]
     pub enum Message {
         Tick,
+        CameraToggle,
+        SelectCamera(CameraIndex),
         SystemInformationReceived(system::Information),
         Navigate(Screen),
     }
@@ -53,6 +60,7 @@ pub mod app {
                     camera: flags.camera,
                     state: State::default(),
                     screen: Screen::Home,
+                    cam_rx: flags.cam_rx,
                 },
                 system::fetch_information(Message::SystemInformationReceived),
             )
@@ -76,6 +84,10 @@ pub mod app {
                 }
                 Message::Navigate(screen) => {
                     self.screen = screen;
+                }
+                Message::SelectCamera(_) => todo!(),
+                Message::CameraToggle => {
+                    self.camera.toggle_camera();
                 }
             }
 

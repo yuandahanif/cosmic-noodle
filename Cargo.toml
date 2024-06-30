@@ -13,6 +13,7 @@ iced = { version = "0.12.1", features = [
     "smol",
     "canvas",
     "system",
+    "image",
 ] }
 nokhwa = { version = "0.10.4", features = ["input-native", "output-threaded"] }
 time = "0.3.36"
