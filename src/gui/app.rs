@@ -1,10 +1,6 @@
 pub mod app {
     use iced::{
-        advanced::mouse,
-        executor,
-        widget::{canvas, column, container, horizontal_space, row, scrollable, Container},
-        Alignment, Application, Command, Element, Length, Point, Rectangle, Renderer, Subscription,
-        Theme,
+        executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
 
     use crate::gui::view::app_view;
@@ -44,6 +40,7 @@ pub mod app {
 
     pub struct Flags {
         pub config: Config,
+        pub camera: crate::camera::camera::Camera,
     }
 
     #[derive(Debug, Clone, Copy)]

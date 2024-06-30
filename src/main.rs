@@ -1,18 +1,26 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use directories::ProjectDirs;
-
-mod consts;
-mod gui;
-
 use consts::consts::{self as CONST, INTER_FONT};
-use gui::app::app::{App, Config, Flags};
+use directories::ProjectDirs;
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
+use tracing::Level as TraceLevel;
+
+use gui::app::app::{App, Config, Flags};
+use tracing_subscriber::FmtSubscriber;
+
+mod camera;
+mod consts;
+mod gui;
 
 fn main() -> iced::Result {
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(TraceLevel::TRACE)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
     if let Some(proj_dirs) = ProjectDirs::from(CONST::QUALIFIER, CONST::AUTHOR, CONST::APP_NAME) {
         let dir = proj_dirs.config_dir();
 
@@ -26,6 +34,7 @@ fn main() -> iced::Result {
             CONST::AUTHOR.to_string(),
             CONST::QUALIFIER.to_string(),
         ),
+        camera: camera::camera::Camera::new(),
     };
 
     let settings = Settings {
