@@ -3,44 +3,23 @@ pub mod app {
         executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
 
-    use crate::gui::view::app_view;
+    use crate::camera::camera::Camera;
+    use crate::gui::{config::Config, view::app_view};
 
-    pub struct Config {
-        name: String,
-        version: String,
-        author: String,
-        qualifier: String,
-    }
-
-    impl Default for Config {
-        fn default() -> Self {
-            Config {
-                name: String::from("app"),
-                version: String::from("0.1.0"),
-                author: String::from("author"),
-                qualifier: String::from("com"),
-            }
-        }
-    }
-
-    impl Config {
-        pub fn new(name: String, version: String, author: String, qualifier: String) -> Self {
-            Config {
-                name,
-                version,
-                author,
-                qualifier,
-            }
-        }
+    #[derive(Debug, Default)]
+    pub struct State {
+        pub tick: u64,
     }
 
     pub struct App {
         config: Config,
+        pub camera: Camera,
+        pub state: State,
     }
 
     pub struct Flags {
         pub config: Config,
-        pub camera: crate::camera::camera::Camera,
+        pub camera: Camera,
     }
 
     #[derive(Debug, Clone, Copy)]
@@ -58,13 +37,15 @@ pub mod app {
             (
                 App {
                     config: flags.config,
+                    camera: flags.camera,
+                    state: State::default(),
                 },
                 Command::none(),
             )
         }
 
         fn title(&self) -> String {
-            format!("{} v{}", self.config.name, self.config.version)
+            format!("{} v{}", self.config.name(), self.config.version())
         }
 
         fn theme(&self) -> Theme {
@@ -73,7 +54,9 @@ pub mod app {
 
         fn update(&mut self, message: Message) -> Command<Message> {
             match message {
-                Message::Tick => {}
+                Message::Tick => {
+                    self.state.tick = self.state.tick.wrapping_add(1);
+                }
             }
 
             Command::none()

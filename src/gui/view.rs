@@ -1,6 +1,6 @@
 use iced::{
     advanced::mouse,
-    widget::{canvas, column, container, horizontal_space, row, scrollable, Column},
+    widget::{canvas, column, container, horizontal_space, row, scrollable, text, Column},
     Alignment, Element, Length, Point, Rectangle, Renderer, Theme,
 };
 
@@ -61,10 +61,17 @@ pub fn app_view(app: &App) -> Column<Message> {
 
     let content = container(
         scrollable(
-            column!["Content!", square(400), square(200), square(400), "The end"]
-                .spacing(40)
-                .align_items(Alignment::Center)
-                .width(Length::Fill),
+            column![
+                "Content!",
+                text(app.state.tick).size(10),
+                square(400),
+                square(200),
+                square(400),
+                "The end"
+            ]
+            .spacing(40)
+            .align_items(Alignment::Center)
+            .width(Length::Fill),
         )
         .height(Length::Fill),
     )

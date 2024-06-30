@@ -8,7 +8,7 @@ use iced::{
 };
 use tracing::Level as TraceLevel;
 
-use gui::app::app::{App, Config, Flags};
+use gui::{app::app::{App, Flags}, config::Config};
 use tracing_subscriber::FmtSubscriber;
 
 mod camera;
