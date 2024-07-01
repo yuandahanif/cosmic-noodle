@@ -1,23 +1,41 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use directories::ProjectDirs;
-
-mod consts;
-mod gui;
-
 use consts::consts::{self as CONST, INTER_FONT};
-use gui::app::app::{App, Config, Flags};
+use crossbeam_channel::unbounded;
+use directories::ProjectDirs;
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
 
+use opencv::prelude::Mat;
+
+use tracing::Level as TraceLevel;
+
+use gui::{
+    app::app::{App, Flags},
+    config::Config,
+};
+use tracing_subscriber::FmtSubscriber;
+
+mod camera;
+mod consts;
+mod gui;
+
 fn main() -> iced::Result {
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(TraceLevel::INFO)
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
     if let Some(proj_dirs) = ProjectDirs::from(CONST::QUALIFIER, CONST::AUTHOR, CONST::APP_NAME) {
         let dir = proj_dirs.config_dir();
 
         println!("{:?}", dir.to_str());
     }
+
+    let (cam_tx, cam_rx) = unbounded::<Mat>();
+    let camera = camera::camera::Camera::new(cam_tx);
 
     let flags = Flags {
         config: Config::new(
@@ -26,12 +44,14 @@ fn main() -> iced::Result {
             CONST::AUTHOR.to_string(),
             CONST::QUALIFIER.to_string(),
         ),
+        camera,
+        cam_rx,
     };
 
     let settings = Settings {
         id: None,
         window: window::Settings {
-            size: Size::new(750., 620.), // start size
+            size: Size::new(1352., 755.), // start size
             position: window::Position::Centered,
             min_size: Some(Size::new(750., 620.)),
             max_size: None,

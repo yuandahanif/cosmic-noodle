@@ -5,6 +5,18 @@ edition = "2021"
 publish = false
 
 [dependencies]
+opencv = { version = "0.92.0", features = ["clang-runtime"] }
+anyhow = "=1.0.86"
+crossbeam-channel = "0.5.13"
 directories = "5.0"
-iced = { version = "0.12.1", features = ["advanced", "tokio", "canvas"] }
+iced = { version = "0.12.1", features = [
+    "advanced",
+    "smol",
+    "canvas",
+    "system",
+    "image",
+] }
 time = "0.3.36"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.0"
+bytesize = "1.1"

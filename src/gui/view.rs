@@ -1,10 +1,13 @@
 use iced::{
     advanced::mouse,
-    widget::{canvas, column, container, horizontal_space, row, scrollable, Column},
+    widget::{button, canvas, column, container, horizontal_space, row, scrollable, text, Column},
     Alignment, Element, Length, Point, Rectangle, Renderer, Theme,
 };
 
-use crate::gui::app::app::{App, Message};
+use crate::gui::app::app::{App, Message, Screen};
+use crate::gui::screens::system_information::system_information_screen;
+
+use super::screens::camera::camera_screen;
 
 pub fn square<'a>(size: impl Into<Length> + Copy) -> Element<'a, Message> {
     struct Square;
@@ -51,24 +54,56 @@ pub fn app_view(app: &App) -> Column<Message> {
     );
 
     let sidebar = container(
-        column!["Sidebar!", square(50), square(50)]
-            .spacing(40)
-            .padding(10)
-            .width(200)
-            .align_items(Alignment::Center),
+        column![
+            "Sidebar!",
+            button("Home").on_press(Message::Navigate(Screen::Home)),
+            button("Camera").on_press(Message::Navigate(Screen::Camera)),
+            button("System Information").on_press_maybe(match &app.state.system_information {
+                Some(inf) => Some(Message::Navigate(Screen::SystemInformation(inf.clone()))),
+                None => None,
+            }),
+        ]
+        .spacing(10)
+        .padding(10)
+        .width(200)
+        .align_items(Alignment::Start),
     )
     .center_y();
 
-    let content = container(
-        scrollable(
-            column!["Content!", square(400), square(200), square(400), "The end"]
+    let content = match &app.screen {
+        Screen::SystemInformation(information) => container(
+            scrollable(
+                column![
+                    "System information!",
+                    system_information_screen(information.clone())
+                ]
                 .spacing(40)
                 .align_items(Alignment::Center)
                 .width(Length::Fill),
-        )
-        .height(Length::Fill),
-    )
-    .padding(10);
+            )
+            .height(Length::Fill),
+        ),
+        Screen::Home => container(
+            scrollable(
+                column!["Home!",]
+                    .spacing(40)
+                    .align_items(Alignment::Center)
+                    .width(Length::Fill),
+            )
+            .height(Length::Fill),
+        ),
+        Screen::Settings => {
+            todo!()
+        }
+        Screen::Camera => container(
+            scrollable(
+                column!["Camera!", camera_screen(&app)]
+                    .spacing(40)
+                    .width(Length::Fill),
+            )
+            .height(Length::Fill),
+        ),
+    };
 
     column![header, row![sidebar, content]].into()
 }

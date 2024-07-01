@@ -1,54 +1,51 @@
 pub mod app {
+    use crossbeam_channel::Receiver;
+    use iced::system;
     use iced::{
-        advanced::mouse,
-        executor,
-        widget::{canvas, column, container, horizontal_space, row, scrollable, Container},
-        Alignment, Application, Command, Element, Length, Point, Rectangle, Renderer, Subscription,
-        Theme,
+        executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
 
-    use crate::gui::view::app_view;
+    use opencv::prelude::Mat;
 
-    pub struct Config {
-        name: String,
-        version: String,
-        author: String,
-        qualifier: String,
+    use crate::camera::camera::Camera;
+    use crate::gui::{config::Config, view::app_view};
+
+    #[derive(Debug, Default)]
+    pub struct State {
+        pub tick: u64,
+        pub system_information: Option<system::Information>,
+        pub frame: Mat,
     }
 
-    impl Default for Config {
-        fn default() -> Self {
-            Config {
-                name: String::from("app"),
-                version: String::from("0.1.0"),
-                author: String::from("author"),
-                qualifier: String::from("com"),
-            }
-        }
-    }
-
-    impl Config {
-        pub fn new(name: String, version: String, author: String, qualifier: String) -> Self {
-            Config {
-                name,
-                version,
-                author,
-                qualifier,
-            }
-        }
+    #[derive(Debug, Clone)]
+    pub enum Screen {
+        Home,
+        Camera,
+        SystemInformation(system::Information),
+        Settings,
     }
 
     pub struct App {
         config: Config,
+        pub camera: Camera,
+        pub state: State,
+        pub screen: Screen,
+        pub cam_rx: Receiver<Mat>,
     }
 
     pub struct Flags {
         pub config: Config,
+        pub camera: Camera,
+        pub cam_rx: Receiver<Mat>,
     }
 
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone)]
     pub enum Message {
         Tick,
+        CameraToggle,
+        SelectCamera(i32),
+        SystemInformationReceived(system::Information),
+        Navigate(Screen),
     }
 
     impl Application for App {
@@ -61,13 +58,17 @@ pub mod app {
             (
                 App {
                     config: flags.config,
+                    camera: flags.camera,
+                    state: State::default(),
+                    screen: Screen::Home,
+                    cam_rx: flags.cam_rx,
                 },
-                Command::none(),
+                system::fetch_information(Message::SystemInformationReceived),
             )
         }
 
         fn title(&self) -> String {
-            format!("{} v{}", self.config.name, self.config.version)
+            format!("{} v{}", self.config.name(), self.config.version())
         }
 
         fn theme(&self) -> Theme {
@@ -76,14 +77,30 @@ pub mod app {
 
         fn update(&mut self, message: Message) -> Command<Message> {
             match message {
-                Message::Tick => {}
+                Message::Tick => {
+                    self.state.tick = self.state.tick.wrapping_add(1);
+                    self.state.frame = match self.cam_rx.try_recv() {
+                        Ok(result) => result,
+                        Err(_) => self.state.frame.clone(),
+                    };
+                }
+                Message::SystemInformationReceived(information) => {
+                    self.state.system_information = Some(information);
+                }
+                Message::Navigate(screen) => {
+                    self.screen = screen;
+                }
+                Message::SelectCamera(_) => todo!(),
+                Message::CameraToggle => {
+                    self.camera.toggle_camera();
+                }
             }
 
             Command::none()
         }
 
         fn subscription(&self) -> Subscription<Message> {
-            iced::time::every(std::time::Duration::from_millis(500)).map(|_| Message::Tick)
+            iced::time::every(std::time::Duration::from_millis(10)).map(|_| Message::Tick)
         }
 
         fn view(&self) -> Element<Message> {
