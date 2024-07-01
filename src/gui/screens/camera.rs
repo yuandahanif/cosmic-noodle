@@ -7,7 +7,10 @@ use iced::{
     Element, Length,
 };
 
-use opencv::{core::VectorToVec, imgcodecs};
+use opencv::{
+    core::{MatTraitConst, VectorToVec},
+    imgcodecs,
+};
 
 use crate::gui::app::app::{App, Message};
 
@@ -26,12 +29,16 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
     let mut encoded_image = opencv::core::Vector::<u8>::new();
     let params = opencv::core::Vector::<i32>::new();
     encoded_image.clear();
-    match imgcodecs::imencode(".png", &frame, &mut encoded_image, &params) {
-        Ok(_) => {}
-        Err(e) => {
-            tracing::error!("Error encoding image: {}", e);
+
+    if !frame.empty() {
+        match imgcodecs::imencode(".png", &frame, &mut encoded_image, &params) {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!("Error encoding image: {}", e);
+            }
         }
     }
+
     let image = encoded_image.to_vec();
 
     let image_viewer: image::Viewer<image::Handle> = viewer(image::Handle::from_memory(image))

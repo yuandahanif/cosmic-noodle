@@ -16,4 +16,6 @@ POC of waste management system
 
 ## issues
 
-- opencv binding won't build on my main machine, the error [fatal error: 'memory' file not found](https://github.com/apple/swift-nio-ssl/issues/105)
+- opencv binding won't build on my main machine (Kubuntu 22.4), the error [fatal error: 'memory' file not found](https://github.com/apple/swift-nio-ssl/issues/105)
+
+- nokhwa can't build artifacts on my second machine (Kubuntu 24.4) error: v4l2-sys-mit invalid indent

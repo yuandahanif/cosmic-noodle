@@ -14,17 +14,9 @@ pub mod camera {
         videoio,
     };
 
-    use nokhwa::{
-        nokhwa_initialize,
-        pixel_format::RgbFormat,
-        query,
-        utils::{ApiBackend, CameraIndex, RequestedFormat, RequestedFormatType},
-        CallbackCamera,
-    };
-
     pub struct Camera {
-        device_list: HashMap<String, CameraIndex>,
-        selected_camera: Option<CameraIndex>,
+        device_list: HashMap<String, i32>,
+        selected_camera: Option<i32>,
         sender: Sender<Mat>,
         keep_running: Arc<AtomicBool>,
         cam_thread: Option<thread::JoinHandle<()>>,
@@ -42,29 +34,18 @@ pub mod camera {
         }
 
         pub fn get_available_cameras(&mut self) {
-            nokhwa_initialize(|granted| {
-                println!("User said {}", granted);
-            });
-            self.device_list.clear();
-
-            let cameras = query(ApiBackend::Auto).unwrap();
-            cameras.iter().for_each(|cam| {
-                let index = cam.index().clone();
-
-                self.device_list
-                    .insert(format!("{:<4} {}", cam.human_name(), cam.index()), index);
-            });
+            todo!("Get list of available cameras")
         }
 
-        pub fn get_camera_list(&self) -> &HashMap<String, CameraIndex> {
+        pub fn get_camera_list(&self) -> &HashMap<String, i32> {
             &self.device_list
         }
 
-        pub fn select_camera(&mut self, index: CameraIndex) {
+        pub fn select_camera(&mut self, index: i32) {
             self.selected_camera = Some(index);
         }
 
-        pub fn get_selected_camera(&self) -> Option<&CameraIndex> {
+        pub fn get_selected_camera(&self) -> Option<&i32> {
             self.selected_camera.as_ref()
         }
 

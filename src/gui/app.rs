@@ -4,7 +4,6 @@ pub mod app {
     use iced::{
         executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
     };
-    use nokhwa::utils::CameraIndex;
 
     use opencv::prelude::Mat;
 
@@ -44,7 +43,7 @@ pub mod app {
     pub enum Message {
         Tick,
         CameraToggle,
-        SelectCamera(CameraIndex),
+        SelectCamera(i32),
         SystemInformationReceived(system::Information),
         Navigate(Screen),
     }
