@@ -43,7 +43,7 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
 
     let image_viewer: image::Viewer<image::Handle> = viewer(image::Handle::from_memory(image))
         .width(Length::Fill)
-        .height(Length::Fixed(200.));
+        .height(Length::Fixed(300.));
 
     container(
         column![
