@@ -10,13 +10,14 @@ pub mod app {
     use crate::camera::camera::Camera;
     use crate::gui::{config::Config, view::app_view};
     use crate::onnx::onnx_session::onnx_session::OnnxSession;
+    use crate::types::custom_type::BoundingBoxResult;
 
     #[derive(Debug, Default)]
     pub struct State {
         pub tick: u64,
         pub system_information: Option<system::Information>,
         pub frame: Mat,
-        pub prediction: Vec<(f32, f32, f32, f32, String, f32)>,
+        pub prediction: Vec<BoundingBoxResult>,
     }
 
     #[derive(Debug, Clone)]
@@ -33,6 +34,7 @@ pub mod app {
         pub state: State,
         pub screen: Screen,
         pub cam_rx: Receiver<Mat>,
+        pub prediction_rx: Receiver<Vec<BoundingBoxResult>>,
         pub onnx_session: OnnxSession,
     }
 
@@ -40,6 +42,7 @@ pub mod app {
         pub config: Config,
         pub camera: Camera,
         pub cam_rx: Receiver<Mat>,
+        pub prediction_rx: Receiver<Vec<BoundingBoxResult>>,
         pub onnx_session: OnnxSession,
     }
 
@@ -67,6 +70,7 @@ pub mod app {
                     screen: Screen::Home,
                     cam_rx: flags.cam_rx,
                     onnx_session: flags.onnx_session,
+                    prediction_rx: flags.prediction_rx,
                 },
                 system::fetch_information(Message::SystemInformationReceived),
             )

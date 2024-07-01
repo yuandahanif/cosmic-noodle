@@ -1,13 +1,15 @@
+use crate::types::custom_type::BoundingBoxResult;
+
 pub fn iou(
-    box1: &(f32, f32, f32, f32, String, f32),
-    box2: &(f32, f32, f32, f32, String, f32),
+    box1: &BoundingBoxResult,
+    box2: &BoundingBoxResult,
 ) -> f32 {
     return intersection(box1, box2) / union(box1, box2);
 }
 
 fn union(
-    box1: &(f32, f32, f32, f32, String, f32),
-    box2: &(f32, f32, f32, f32, String, f32),
+    box1: &BoundingBoxResult,
+    box2: &BoundingBoxResult,
 ) -> f32 {
     let (box1_x1, box1_y1, box1_x2, box1_y2, _, _) = *box1;
     let (box2_x1, box2_y1, box2_x2, box2_y2, _, _) = *box2;
@@ -17,8 +19,8 @@ fn union(
 }
 
 fn intersection(
-    box1: &(f32, f32, f32, f32, String, f32),
-    box2: &(f32, f32, f32, f32, String, f32),
+    box1: &BoundingBoxResult,
+    box2: &BoundingBoxResult,
 ) -> f32 {
     let (box1_x1, box1_y1, box1_x2, box1_y2, _, _) = *box1;
     let (box2_x1, box2_y1, box2_x2, box2_y2, _, _) = *box2;

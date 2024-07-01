@@ -15,11 +15,13 @@ use gui::{
     app::app::{App, Flags},
     config::Config,
 };
+use types::custom_type::BoundingBoxResult;
 
 mod camera;
 mod consts;
 mod gui;
 mod onnx;
+mod types;
 
 fn main() -> iced::Result {
     let subscriber = FmtSubscriber::builder()
@@ -33,9 +35,11 @@ fn main() -> iced::Result {
         println!("{:?}", dir.to_str());
     }
 
-    let onnx_session = onnx::onnx_session::onnx_session::OnnxSession::new(MODEL_TACO);
     let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
+    let (prediction_tx, prediction_rx) = unbounded::<Vec<BoundingBoxResult>>();
+    let onnx_session =
+        onnx::onnx_session::onnx_session::OnnxSession::new(MODEL_TACO, prediction_tx);
 
     let flags = Flags {
         config: Config::new(
@@ -46,6 +50,7 @@ fn main() -> iced::Result {
         ),
         camera,
         cam_rx,
+        prediction_rx,
         onnx_session,
     };
 

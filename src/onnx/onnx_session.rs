@@ -1,4 +1,5 @@
 pub mod onnx_session {
+    use crossbeam_channel::Sender;
     use ndarray::{s, ArrayBase, Axis, Dim, IxDynImpl, ViewRepr};
     use ort::{GraphOptimizationLevel, Session};
 
@@ -7,14 +8,17 @@ pub mod onnx_session {
         prelude::Mat,
     };
 
-    use crate::{consts::consts::YOLO_CLASS, onnx::iou::iou};
+    use crate::{
+        consts::consts::YOLO_CLASS, onnx::iou::iou, types::custom_type::BoundingBoxResult,
+    };
 
     pub struct OnnxSession {
         session: Session,
+        sender: Sender<Vec<BoundingBoxResult>>,
     }
 
     impl OnnxSession {
-        pub fn new(model: &[u8]) -> Self {
+        pub fn new(model: &[u8], sender: Sender<Vec<BoundingBoxResult>>) -> Self {
             let session = Session::builder()
                 .unwrap()
                 .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -24,7 +28,7 @@ pub mod onnx_session {
                 .commit_from_memory(model)
                 .unwrap();
 
-            OnnxSession { session }
+            OnnxSession { session, sender }
         }
 
         fn pre_process(&self, image: &Mat) -> opencv::Result<Mat> {
@@ -62,7 +66,7 @@ pub mod onnx_session {
             size: (i32, i32),
             conf_thresh: f32,
             nms_thresh: f32,
-        ) -> Vec<(f32, f32, f32, f32, std::string::String, f32)> {
+        ) -> Vec<BoundingBoxResult> {
             let width = size.0;
             let height = size.1;
             let boxes = outs.t();
@@ -110,7 +114,7 @@ pub mod onnx_session {
             return result;
         }
 
-        pub fn run(&self, image: Mat) -> ort::Result<Vec<(f32, f32, f32, f32, String, f32)>> {
+        pub fn run(&self, image: Mat) -> ort::Result<Vec<BoundingBoxResult>> {
             let width = image.cols();
             let height = image.rows();
 

@@ -12,7 +12,9 @@ POC of waste management system
 
 ## references
 
+- [extract Mat pixel from this tutorial](https://docs.opencv.org/4.x/de/d06/tutorial_js_basic_ops.html)
 - [StableView](https://github.com/Shubhamai/StableView)
+- [Implementing YOLOv8 Object Detection with OpenCV in Rust Using ONNX Models](https://linzichun.com/posts/rust-opencv-onnx-yolov8-detect/)
 
 ## issues
 
