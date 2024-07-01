@@ -9,12 +9,14 @@ pub mod app {
 
     use crate::camera::camera::Camera;
     use crate::gui::{config::Config, view::app_view};
+    use crate::onnx::onnx_session::onnx_session::OnnxSession;
 
     #[derive(Debug, Default)]
     pub struct State {
         pub tick: u64,
         pub system_information: Option<system::Information>,
         pub frame: Mat,
+        pub prediction: Vec<(f32, f32, f32, f32, String, f32)>,
     }
 
     #[derive(Debug, Clone)]
@@ -31,12 +33,14 @@ pub mod app {
         pub state: State,
         pub screen: Screen,
         pub cam_rx: Receiver<Mat>,
+        pub onnx_session: OnnxSession,
     }
 
     pub struct Flags {
         pub config: Config,
         pub camera: Camera,
         pub cam_rx: Receiver<Mat>,
+        pub onnx_session: OnnxSession,
     }
 
     #[derive(Debug, Clone)]
@@ -62,6 +66,7 @@ pub mod app {
                     state: State::default(),
                     screen: Screen::Home,
                     cam_rx: flags.cam_rx,
+                    onnx_session: flags.onnx_session,
                 },
                 system::fetch_information(Message::SystemInformationReceived),
             )
@@ -80,7 +85,18 @@ pub mod app {
                 Message::Tick => {
                     self.state.tick = self.state.tick.wrapping_add(1);
                     self.state.frame = match self.cam_rx.try_recv() {
-                        Ok(result) => result,
+                        Ok(result) => {
+                            // run the model every 10 frames
+                            if self.state.tick % 100 == 0 {
+                                let bounding = self.onnx_session.run(result.clone()).unwrap();
+
+                                println!("{:?}", bounding);
+
+                                self.state.prediction = bounding;
+                                self.state.tick = 0;
+                            }
+                            result
+                        }
                         Err(_) => self.state.frame.clone(),
                     };
                 }

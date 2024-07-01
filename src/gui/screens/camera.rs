@@ -45,6 +45,10 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
         .width(Length::Fill)
         .height(Length::Fixed(300.));
 
+    let prediction_label = app.state.prediction.iter().fold(String::new(), |acc, x| {
+        format!("{}{}: {:.2}\n", acc, x.4, x.5)
+    });
+
     container(
         column![
             text(app.state.tick.to_string())
@@ -56,7 +60,10 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
                 text("Select a camera:"),
                 camera_pick_list,
             ))
-            .width(Length::Fill)
+            .width(Length::Fill),
+            text(prediction_label)
+                .size(50)
+                .width(Length::Fill),
         ]
         .spacing(40)
         .width(Length::Fill),

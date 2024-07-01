@@ -33,11 +33,7 @@ fn main() -> iced::Result {
         println!("{:?}", dir.to_str());
     }
 
-    let img_path = "assets/test/test_image.jpg";
-    let img = imgcodecs::imread(img_path, imgcodecs::IMREAD_COLOR).unwrap();
     let onnx_session = onnx::onnx_session::onnx_session::OnnxSession::new(MODEL_TACO);
-    onnx_session.run(img);
-
     let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
 
@@ -50,6 +46,7 @@ fn main() -> iced::Result {
         ),
         camera,
         cam_rx,
+        onnx_session,
     };
 
     let settings = Settings {
