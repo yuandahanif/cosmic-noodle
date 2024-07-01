@@ -1,26 +1,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use consts::consts::{self as CONST, INTER_FONT};
+use consts::consts::{self as CONST, INTER_FONT, MODEL_TACO};
 use crossbeam_channel::unbounded;
 use directories::ProjectDirs;
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
-
-use opencv::prelude::Mat;
-
+use opencv::{imgcodecs, prelude::Mat};
 use tracing::Level as TraceLevel;
+use tracing_subscriber::FmtSubscriber;
 
 use gui::{
     app::app::{App, Flags},
     config::Config,
 };
-use tracing_subscriber::FmtSubscriber;
 
 mod camera;
 mod consts;
 mod gui;
+mod onnx;
 
 fn main() -> iced::Result {
     let subscriber = FmtSubscriber::builder()
@@ -33,6 +32,11 @@ fn main() -> iced::Result {
 
         println!("{:?}", dir.to_str());
     }
+
+    let img_path = "assets/test/test_image.jpg";
+    let img = imgcodecs::imread(img_path, imgcodecs::IMREAD_COLOR).unwrap();
+    let onnx_session = onnx::onnx_session::onnx_session::OnnxSession::new(MODEL_TACO);
+    onnx_session.run(img);
 
     let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
