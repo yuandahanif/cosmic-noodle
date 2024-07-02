@@ -1,5 +1,8 @@
 pub mod onnx_session {
-    use crossbeam_channel::Sender;
+
+    use std::path::Path;
+
+    use crossbeam_channel::{Receiver, Sender};
     use ndarray::{s, ArrayBase, Axis, Dim, IxDynImpl, ViewRepr};
     use ort::{GraphOptimizationLevel, Session};
 
@@ -15,10 +18,26 @@ pub mod onnx_session {
     pub struct OnnxSession {
         session: Session,
         sender: Sender<Vec<BoundingBoxResult>>,
+        input_reciver: Receiver<Mat>,
     }
 
     impl OnnxSession {
-        pub fn new(model: &[u8], sender: Sender<Vec<BoundingBoxResult>>) -> Self {
+        pub fn new(
+            model: &[u8],
+            sender: Sender<Vec<BoundingBoxResult>>,
+            input_reciver: Receiver<Mat>,
+        ) -> Self {
+            ort::init_from(
+                Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("assets")
+                    .join("onnxruntime-build")
+                    .join("libonnxruntime.so.1.17.3")
+                    .to_str()
+                    .unwrap(),
+            )
+            .commit()
+            .unwrap();
+
             let session = Session::builder()
                 .unwrap()
                 .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -28,7 +47,11 @@ pub mod onnx_session {
                 .commit_from_memory(model)
                 .unwrap();
 
-            OnnxSession { session, sender }
+            OnnxSession {
+                session,
+                sender,
+                input_reciver,
+            }
         }
 
         fn pre_process(&self, image: &Mat) -> opencv::Result<Mat> {
@@ -155,6 +178,13 @@ pub mod onnx_session {
 
             let result = self.post_process(output, (width, height), 0.4, 0.3);
             Ok(result)
+        }
+
+        pub fn run_with_sender(&self) {
+            if let Ok(image) = self.input_reciver.try_recv() {
+                let result = self.run(image).unwrap();
+                self.sender.send(result).unwrap();
+            }
         }
     }
 }

@@ -7,7 +7,8 @@ use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
-use opencv::{imgcodecs, prelude::Mat};
+use onnx::onnx_thread;
+use opencv::prelude::Mat;
 use tracing::Level as TraceLevel;
 use tracing_subscriber::FmtSubscriber;
 
@@ -37,9 +38,15 @@ fn main() -> iced::Result {
 
     let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
-    let (prediction_tx, prediction_rx) = unbounded::<Vec<BoundingBoxResult>>();
-    let onnx_session =
-        onnx::onnx_session::onnx_session::OnnxSession::new(MODEL_TACO, prediction_tx);
+
+    let (model_output_tx, model_output_rx) = unbounded::<Vec<BoundingBoxResult>>();
+    let (model_input_tx, model_input_rx) = unbounded::<Mat>();
+    let onnx_session = onnx::onnx_session::onnx_session::OnnxSession::new(
+        MODEL_TACO,
+        model_output_tx,
+        model_input_rx,
+    );
+    let onnx_thread = onnx_thread::onnx_thread::OnnxThread::new(onnx_session);
 
     let flags = Flags {
         config: Config::new(
@@ -50,8 +57,9 @@ fn main() -> iced::Result {
         ),
         camera,
         cam_rx,
-        prediction_rx,
-        onnx_session,
+        model_output_rx,
+        model_input_tx,
+        onnx_thread,
     };
 
     let settings = Settings {

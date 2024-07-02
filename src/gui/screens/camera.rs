@@ -23,7 +23,7 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
         app.camera.get_selected_camera(),
         Message::SelectCamera,
     )
-    .placeholder("Choose webcam");
+    .placeholder("Chose webcam");
 
     let frame = app.state.frame.clone();
     let mut encoded_image = opencv::core::Vector::<u8>::new();
