@@ -1,26 +1,28 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use consts::consts::{self as CONST, INTER_FONT};
+use consts::consts::{self as CONST, INTER_FONT, MODEL_TACO};
 use crossbeam_channel::unbounded;
 use directories::ProjectDirs;
 use iced::{
     window::{self, settings::PlatformSpecific, Level},
     Application, Settings, Size,
 };
-
+use onnx::onnx_thread;
 use opencv::prelude::Mat;
-
 use tracing::Level as TraceLevel;
+use tracing_subscriber::FmtSubscriber;
 
 use gui::{
     app::app::{App, Flags},
     config::Config,
 };
-use tracing_subscriber::FmtSubscriber;
+use types::custom_type::BoundingBoxResult;
 
 mod camera;
 mod consts;
 mod gui;
+mod onnx;
+mod types;
 
 fn main() -> iced::Result {
     let subscriber = FmtSubscriber::builder()
@@ -37,6 +39,15 @@ fn main() -> iced::Result {
     let (cam_tx, cam_rx) = unbounded::<Mat>();
     let camera = camera::camera::Camera::new(cam_tx);
 
+    let (model_output_tx, model_output_rx) = unbounded::<Vec<BoundingBoxResult>>();
+    let (model_input_tx, model_input_rx) = unbounded::<Mat>();
+    let onnx_session = onnx::onnx_session::onnx_session::OnnxSession::new(
+        MODEL_TACO,
+        model_output_tx,
+        model_input_rx,
+    );
+    let onnx_thread = onnx_thread::onnx_thread::OnnxThread::new(onnx_session);
+
     let flags = Flags {
         config: Config::new(
             CONST::APP_NAME.to_string(),
@@ -46,6 +57,9 @@ fn main() -> iced::Result {
         ),
         camera,
         cam_rx,
+        model_output_rx,
+        model_input_tx,
+        onnx_thread,
     };
 
     let settings = Settings {

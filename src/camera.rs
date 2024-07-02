@@ -61,7 +61,7 @@ pub mod camera {
             if self.cam_thread.is_some() {
                 return;
             }
-            let camera_index = self
+            let _camera_index = self
                 .selected_camera
                 .take()
                 .or_else(|| self.device_list.values().next().cloned());

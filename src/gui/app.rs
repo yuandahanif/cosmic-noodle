@@ -1,20 +1,23 @@
 pub mod app {
-    use crossbeam_channel::Receiver;
-    use iced::system;
+    use crossbeam_channel::{Receiver, Sender};
     use iced::{
-        executor, widget::Container, Application, Command, Element, Length, Subscription, Theme,
+        executor, system, widget::Container, Application, Command, Element, Length, Subscription,
+        Theme,
     };
-
     use opencv::prelude::Mat;
 
     use crate::camera::camera::Camera;
     use crate::gui::{config::Config, view::app_view};
+    use crate::onnx::onnx_thread::onnx_thread::OnnxThread;
+    use crate::types::custom_type::BoundingBoxResult;
 
-    #[derive(Debug, Default)]
-    pub struct State {
-        pub tick: u64,
-        pub system_information: Option<system::Information>,
-        pub frame: Mat,
+    pub struct Flags {
+        pub config: Config,
+        pub camera: Camera,
+        pub cam_rx: Receiver<Mat>,
+        pub model_output_rx: Receiver<Vec<BoundingBoxResult>>,
+        pub model_input_tx: Sender<Mat>,
+        pub onnx_thread: OnnxThread,
     }
 
     #[derive(Debug, Clone)]
@@ -31,12 +34,17 @@ pub mod app {
         pub state: State,
         pub screen: Screen,
         pub cam_rx: Receiver<Mat>,
+        pub model_output_rx: Receiver<Vec<BoundingBoxResult>>,
+        pub model_input_tx: Sender<Mat>,
+        pub onnx_thread: OnnxThread,
     }
 
-    pub struct Flags {
-        pub config: Config,
-        pub camera: Camera,
-        pub cam_rx: Receiver<Mat>,
+    #[derive(Debug, Default)]
+    pub struct State {
+        pub tick: u64,
+        pub system_information: Option<system::Information>,
+        pub frame: Mat,
+        pub prediction: Vec<BoundingBoxResult>,
     }
 
     #[derive(Debug, Clone)]
@@ -62,8 +70,13 @@ pub mod app {
                     state: State::default(),
                     screen: Screen::Home,
                     cam_rx: flags.cam_rx,
+                    onnx_thread: flags.onnx_thread,
+                    model_output_rx: flags.model_output_rx,
+                    model_input_tx: flags.model_input_tx,
                 },
-                system::fetch_information(Message::SystemInformationReceived),
+                Command::batch([system::fetch_information(
+                    Message::SystemInformationReceived,
+                )]),
             )
         }
 
@@ -80,8 +93,22 @@ pub mod app {
                 Message::Tick => {
                     self.state.tick = self.state.tick.wrapping_add(1);
                     self.state.frame = match self.cam_rx.try_recv() {
-                        Ok(result) => result,
+                        Ok(result) => {
+                            // run the model every 10 frames
+                            if self.state.tick % 100 == 0 {
+                                if let Err(err) = self.model_input_tx.try_send(result.clone()) {
+                                    println!("Error sending frame to model: {:?}", err);
+                                    self.state.tick = 0;
+                                }
+                            }
+                            result
+                        }
                         Err(_) => self.state.frame.clone(),
+                    };
+
+                    self.state.prediction = match self.model_output_rx.try_recv() {
+                        Ok(result) => result,
+                        Err(_) => self.state.prediction.clone(),
                     };
                 }
                 Message::SystemInformationReceived(information) => {
@@ -93,6 +120,7 @@ pub mod app {
                 Message::SelectCamera(_) => todo!(),
                 Message::CameraToggle => {
                     self.camera.toggle_camera();
+                    self.onnx_thread.start(); // hack
                 }
             }
 
