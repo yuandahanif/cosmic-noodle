@@ -61,9 +61,7 @@ pub fn camera_screen<'a>(app: &'a App) -> Element<'a, Message> {
                 camera_pick_list,
             ))
             .width(Length::Fill),
-            text(prediction_label)
-                .size(50)
-                .width(Length::Fill),
+            text(prediction_label).size(20).width(Length::Fill),
         ]
         .spacing(40)
         .width(Length::Fill),
