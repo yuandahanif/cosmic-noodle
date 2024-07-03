@@ -15,12 +15,16 @@ To run the accuracy test, place the images in the `assets/test` folder and then 
 ```bash
 python3 evaluate_object.py
 ```
+![result](assets/images/evaluate_result.png)
+
 
 To run the realtime detection
 
 ```bash
 python3 detect_object.py
 ```
+
+![result](assets/images/detection_result.gif)
 
 ## requirements
 
