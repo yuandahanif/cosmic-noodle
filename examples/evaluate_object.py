@@ -9,6 +9,7 @@ import torch
 # Model and dataset paths
 MODEL_PATH = "../assets/model/yolov8-taco.onnx"
 DATASET_PATH = "../assets/test"
+# DATASET_PATH = "/home/yume/coding/waste-management/val"
 CLASS_NAMES_PATH = "../assets/model/class_name.txt"
 
 
